@@ -1,6 +1,7 @@
 import type { UnwrapRef, Ref, WritableComputedRef, DeepReadonly } from 'vue';
 import { reactive, readonly, computed, getCurrentInstance, watchEffect, unref, nextTick, toRaw } from 'vue';
-import {Form} from "ant-design-vue";
+import { Form } from 'ant-design-vue';
+import { FormItemContext } from 'ant-design-vue/es/form/FormItemContext';
 
 import { isEqual } from 'lodash-es';
 export function useRuleFormItem<T extends Recordable, K extends keyof T, V = UnwrapRef<T[K]>>(
@@ -8,7 +9,7 @@ export function useRuleFormItem<T extends Recordable, K extends keyof T, V = Unw
   key?: K,
   changeEvent?,
   emitData?: Ref<any[] | undefined>
-): [WritableComputedRef<V>, (val: V) => void, DeepReadonly<V>];
+): [WritableComputedRef<V>, (val: V) => void, DeepReadonly<V>, FormItemContext];
 export function useRuleFormItem<T extends Recordable>(props: T, key: keyof T = 'value', changeEvent = 'change', emitData?: Ref<any[]>) {
   const instance = getCurrentInstance();
   const emit = instance?.emit;
@@ -30,8 +31,8 @@ export function useRuleFormItem<T extends Recordable>(props: T, key: keyof T = '
 
   const state: any = computed({
     get() {
-      //修复多选时空值显示问题
-      return !innerState.value || innerState.value === '' ? [] : innerState.value;
+      //修复多选时空值显示问题（兼容值为0的情况）
+      return innerState.value == null || innerState.value === '' ? [] : innerState.value;
     },
     set(value) {
       if (isEqual(value, defaultState.value)) return;
@@ -46,5 +47,5 @@ export function useRuleFormItem<T extends Recordable>(props: T, key: keyof T = '
     },
   });
 
-  return [state, setState, defaultState];
+  return [state, setState, defaultState, formItemContext];
 }
